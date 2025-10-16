@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clima en Cochabamba</title>
+  <style>
+    body {
+      background: #eef2f7;
+      color: #333;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 20px;
+    }
+    .weather-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+    }
+    .weather-header {
+      text-align: center;
+    }
+    .weather-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .weather-now {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .weather-now .label {
+      font-weight: bold;
+    }
+    .forecast {
+      margin-top: 20px;
+    }
+    .forecast h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    .forecast .day {
+      background: #f5f7fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="weather-card">
+    <div class="weather-header">
+      <h1>Cochabamba, Bolivia</h1>
+      <div id="lastUpdate">Actualizando...</div>
+    </div>
+
+    <div class="weather-now">
+      <div class="label">Temperatura:</div>
+      <div id="tempNow">-- °C</div>
+      <div class="label">Sensación:</div>
+      <div id="feelsNow">-- °C</div>
+      <div class="label">Humedad:</div>
+      <div id="humNow">-- %</div>
+      <div class="label">Viento:</div>
+      <div id="windNow">-- km/h</div>
+      <div class="label">Descripción:</div>
+      <div id="descNow">—</div>
+    </div>
+
+    <div class="forecast">
+      <h2>Pronóstico (próximos días)</h2>
+      <div id="forecastDays">
+        <!-- Los días futuros aparecerán aquí -->
+      </div>
+    </div>
+  </div>
+
+<script>
+// --------------------
+// Configuración
+// --------------------
+// Coordenadas aproximadas de Cochabamba
+const COORD = { lat: -17.39, lon: -66.16 };
+
+// Puedes usar cualquier API de clima que te guste.
+// Aquí usaré Open-Meteo como ejemplo:
+async function fetchWeather(lat, lon) {
+  const url = new URL('https://api.open-meteo.com/v1/forecast');
+  url.searchParams.set('latitude', lat);
+  url.searchParams.set('longitude', lon);
+  url.searchParams.set('timezone', 'America/La_Paz');
+  url.searchParams.set('current_weather', 'true');
+  url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,weathercode');
+  url.searchParams.set('hourly', 'weathercode');  // opcional
+
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    throw new Error('Error al obtener datos del clima');
+  }
+  const data = await resp.json();
+  return data;
+}
+
+// Mapa de códigos a descripción básica
+const WMO = {
+  0: 'Despejado',
+  1: 'Pocas nubes',
+  2: 'Parcialmente nublado',
+  3: 'Nublado',
+  45: 'Niebla',
+  48: 'Niebla con escarcha',
+  51: 'Llovizna ligera',
+  53: 'Llovizna',
+  55: 'Llovizna fuerte',
+  61: 'Lluvia ligera',
+  63: 'Lluvia',
+  65: 'Lluvia intensa',
+  80: 'Chubascos ligeros',
+  81: 'Chubascos',
+  82: 'Chubascos intensos',
+  95: 'Tormenta',
+  99: 'Tormenta severa'
+};
+
+function describeCode(code) {
+  return WMO[code] || '—';
+}
+
+// --------------------
+// Renderizar datos
+// --------------------
+function renderNow(current) {
+  document.getElementById('tempNow').textContent = current.temperature + ' °C';
+  document.getElementById('feelsNow').textContent = current.temperature + ' °C';  // Open-Meteo no da sensación, usar temperatura misma
+  document.getElementById('humNow').textContent = (current.relativehumidity_2m ?? '-') + ' %';
+  document.getElementById('windNow').textContent = (current.windspeed_10m ?? '-') + ' km/h';
+  document.getElementById('descNow').textContent = describeCode(current.weathercode);
+  document.getElementById('lastUpdate').textContent = 'Última actualización: ' + new Date().toLocaleTimeString();
+}
+
+function renderForecast(daily) {
+  const cont = document.getElementById('forecastDays');
+  cont.innerHTML = '';
+  for (let i = 0; i < daily.time.length; i++) {
+    const day = daily.time[i];
+    const hi = daily.temperature_2m_max[i];
+    const lo = daily.temperature_2m_min[i];
+    const code = daily.weathercode[i];
+
+    const div = document.createElement('div');
+    div.className = 'day';
+    div.innerHTML = `
+      <div>${day}</div>
+      <div>${hi}° / ${lo}°</div>
+      <div>${describeCode(code)}</div>
+    `;
+    cont.appendChild(div);
+  }
+}
+
+// --------------------
+// Lógica principal
+// --------------------
+async function updateWeather() {
+  try {
+    const data = await fetchWeather(COORD.lat, COORD.lon);
+    const cw = data.current_weather;
+    const daily = data.daily;
+
+    renderNow(cw);
+    renderForecast(daily);
+  } catch (err) {
+    console.error('Error al actualizar clima:', err);
+  }
+}
+
+// Primera carga
+updateWeather();
+// Puedes refrescar cada X minutos si quieres:
+// setInterval(updateWeather, 10 * 60 * 1000);
+</script>
+
+</body>
+</html>
