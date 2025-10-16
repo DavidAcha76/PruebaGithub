@@ -1,148 +1,540 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Te amo oso</title>
-  <style>
-    /* Reset básico */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clima — Simple y Rápido</title>
+<style>
+  /* ===========================
+     Estilos base y layout
+     =========================== */
+  :root{
+    --bg:#0f172a;           /* fondo azul oscuro */
+    --panel:#111827;        /* panel principal */
+    --soft:#1f2937;         /* bloques */
+    --text:#e5e7eb;         /* texto principal */
+    --muted:#9ca3af;        /* texto secundario */
+    --accent:#06b6d4;       /* cian */
+    --ok:#22c55e;           /* verde */
+    --warn:#f59e0b;         /* amarillo */
+    --err:#ef4444;          /* rojo */
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background: radial-gradient(1200px 600px at 50% -100px, #0b1324 10%, var(--bg) 60%);
+    color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+    line-height:1.45;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .app{
+    width:min(1100px, 100%);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0));
+    backdrop-filter: blur(4px);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:var(--radius);
+    padding:18px;
+    display:grid;
+    grid-template-rows: auto auto 1fr;
+    gap:14px;
+  }
+  header{
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    padding:8px 12px;
+    border-radius:calc(var(--radius) - 6px);
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .brand{display:flex; align-items:center; gap:12px}
+  .brand .dot{
+    width:12px; height:12px; border-radius:50%;
+    background:var(--accent); box-shadow:0 0 24px var(--accent);
+  }
+  .brand h1{
+    font-size:16px; margin:0; letter-spacing:.4px; font-weight:700;
+  }
 
-    /* Fondo animado */
-    body {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(-45deg, #ffafbd, #ffc3a0, #2193b0, #6dd5ed);
-      background-size: 400% 400%;
-      animation: gradient 12s ease infinite;
-      font-family: "Poppins", sans-serif;
-      color: #fff;
-      overflow: hidden;
-    }
+  /* ===========================
+     Barra de controles
+     =========================== */
+  .controls{
+    display:grid; grid-template-columns: 1fr auto auto auto; gap:10px;
+    background:var(--panel); border-radius:calc(var(--radius) - 6px);
+    padding:12px; border:1px solid rgba(255,255,255,0.06);
+  }
+  .search{
+    display:flex; gap:8px; align-items:center;
+    background:var(--soft); border-radius:10px; padding:8px;
+  }
+  .search input{
+    flex:1; border:none; outline:none; background:transparent; color:var(--text);
+    font-size:14px;
+  }
+  .btn{
+    border:none; outline:none; cursor:pointer;
+    background:var(--accent); color:#002732; font-weight:700;
+    padding:10px 14px; border-radius:10px;
+  }
+  .btn.secondary{
+    background:#0ea5e9; color:#041116;
+  }
+  .btn.ghost{
+    background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.12);
+  }
+  .unit-toggle{
+    display:flex; align-items:center; gap:6px; padding:0 10px;
+  }
+  .unit-toggle input{accent-color:var(--accent)}
+  .hint{color:var(--muted); font-size:12px; text-align:right; align-self:center}
 
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+  /* ===========================
+     Contenido principal
+     =========================== */
+  .content{
+    display:grid; grid-template-columns: 420px 1fr; gap:14px;
+  }
+  .card{
+    background:var(--panel); border-radius:calc(var(--radius) - 6px);
+    border:1px solid rgba(255,255,255,0.06);
+    padding:14px;
+  }
+  .now{
+    display:grid; gap:12px;
+  }
+  .place{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+  }
+  .place h2{margin:0 0 2px 0; font-size:20px}
+  .place .meta{color:var(--muted); font-size:13px}
+  .big-temp{
+    display:flex; align-items:baseline; gap:8px; margin-top:8px;
+  }
+  .big-temp .t{
+    font-size:56px; font-weight:800; letter-spacing:-1px;
+  }
+  .big-temp .unit{font-size:18px; color:var(--muted)}
+  .summary{
+    display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:8px;
+  }
+  .kv{
+    background:var(--soft); border-radius:10px; padding:10px;
+    display:grid; gap:6px; border:1px solid rgba(255,255,255,0.06);
+  }
+  .kv label{color:var(--muted); font-size:12px}
+  .kv .val{font-weight:700}
 
-    /* Contenedor principal */
-    .container {
-      text-align: center;
-      padding: 50px;
-      backdrop-filter: blur(12px);
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
-      animation: float 3s ease-in-out infinite;
-    }
+  /* Tablas de pronóstico */
+  .tabs{
+    display:flex; gap:8px; margin-bottom:10px;
+  }
+  .tabs .tab{
+    padding:8px 10px; border-radius:8px; background:var(--soft);
+    border:1px solid rgba(255,255,255,0.06); cursor:pointer; user-select:none;
+  }
+  .tabs .tab.active{outline:2px solid var(--accent)}
+  .grid{
+    display:grid; gap:8px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  .chip{
+    background:var(--soft); border:1px solid rgba(255,255,255,0.06);
+    border-radius:10px; padding:8px;
+    display:grid; gap:4px; text-align:center;
+  }
+  .chip .t{font-size:18px; font-weight:800}
+  .chip .w{font-size:12px; color:var(--muted)}
+  .chip .hi{color:var(--ok); font-weight:700}
+  .chip .lo{color:#60a5fa; font-weight:700}
+  .chip .rain{color:var(--warn); font-weight:700}
+  .chip .wind{color:#93c5fd; font-weight:700}
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
+  /* Responsivo */
+  @media (max-width: 980px){
+    .content{grid-template-columns: 1fr}
+  }
+  @media (max-width:600px){
+    .controls{grid-template-columns:1fr 1fr; grid-auto-rows:auto}
+    .hint{grid-column:1 / -1; text-align:left}
+  }
 
-    /* Título principal */
-    h1 {
-      font-size: 3.5em;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-    }
-
-    /* Línea decorativa */
-    .line {
-      width: 100px;
-      height: 3px;
-      background-color: #fff;
-      margin: 25px auto;
-      border-radius: 2px;
-      opacity: 0.7;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scaleX(1); opacity: 0.7; }
-      50% { transform: scaleX(1.5); opacity: 1; }
-      100% { transform: scaleX(1); opacity: 0.7; }
-    }
-
-    /* Texto secundario */
-    p {
-      font-size: 1.2em;
-      letter-spacing: 1px;
-      margin-top: 10px;
-      opacity: 0.9;
-    }
-
-    /* Corazones flotantes (solo estilo visual, sin emojis) */
-    .heart {
-      position: absolute;
-      width: 15px;
-      height: 15px;
-      background: #fff;
-      transform: rotate(45deg);
-      animation: hearts 6s linear infinite;
-    }
-
-    .heart::before,
-    .heart::after {
-      content: "";
-      position: absolute;
-      width: 15px;
-      height: 15px;
-      background: #fff;
-      border-radius: 50%;
-    }
-
-    .heart::before {
-      top: -7.5px;
-      left: 0;
-    }
-
-    .heart::after {
-      left: 7.5px;
-      top: 0;
-    }
-
-    @keyframes hearts {
-      0% {
-        transform: translateY(0) scale(0.8) rotate(45deg);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-800px) scale(1.2) rotate(45deg);
-        opacity: 0;
-      }
-    }
-
-    /* Generar múltiples corazones */
-    .heart:nth-child(1) { left: 10%; animation-delay: 0s; }
-    .heart:nth-child(2) { left: 25%; animation-delay: 2s; }
-    .heart:nth-child(3) { left: 40%; animation-delay: 4s; }
-    .heart:nth-child(4) { left: 60%; animation-delay: 1s; }
-    .heart:nth-child(5) { left: 80%; animation-delay: 3s; }
-
-  </style>
+  /* Estados */
+  .error{
+    padding:10px; border-radius:10px; background:rgba(239,68,68,0.07);
+    border:1px solid rgba(239,68,68,0.35); color:#fecaca; font-size:14px;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Te amo, oso</h1>
-    <div class="line"></div>
-    <p>Eres mi razón, mi calma y mi aventura.</p>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="dot"></div>
+        <h1>Clima — Simple</h1>
+      </div>
+      <div class="hint" id="timeInfo">—</div>
+    </header>
+
+    <section class="controls">
+      <!-- Buscador de ciudad -->
+      <div class="search">
+        <input id="q" type="search" placeholder="Busca una ciudad… (ej. Cochabamba, Madrid, CDMX)" autocomplete="off" />
+        <button class="btn" id="btnSearch" title="Buscar por nombre">Buscar</button>
+      </div>
+
+      <!-- Mi ubicación -->
+      <button class="btn secondary" id="btnGeo" title="Usar mi ubicación">Usar ubicación</button>
+
+      <!-- Selector de unidades -->
+      <div class="unit-toggle">
+        <input type="checkbox" id="unit" />
+        <label for="unit" title="Cambiar °C / °F">°C / °F</label>
+      </div>
+
+      <!-- Tip -->
+      <div class="hint">Consejo: activa “Usar ubicación” para datos más precisos.</div>
+    </section>
+
+    <section class="content">
+      <!-- Panel: Ahora -->
+      <div class="card now" id="nowPanel">
+        <div class="place">
+          <div>
+            <h2 id="placeName">—</h2>
+            <div class="meta" id="placeMeta">—</div>
+          </div>
+          <div class="big-temp">
+            <div class="t" id="nowTemp">—</div>
+            <div class="unit" id="nowUnit">°C</div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="kv">
+            <label>Descripción</label>
+            <div class="val" id="nowDesc">—</div>
+          </div>
+          <div class="kv">
+            <label>Sensación</label>
+            <div class="val" id="nowFeels">—</div>
+          </div>
+          <div class="kv">
+            <label>Humedad</label>
+            <div class="val" id="nowHum">—</div>
+          </div>
+          <div class="kv">
+            <label>Viento</label>
+            <div class="val" id="nowWind">—</div>
+          </div>
+        </div>
+
+        <div id="errorBox" class="error" style="display:none"></div>
+      </div>
+
+      <!-- Panel: Pronóstico -->
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="hourly">Hoy</div>
+          <div class="tab" data-tab="daily">Próximos días</div>
+        </div>
+        <div id="tabContent" class="grid"></div>
+      </div>
+    </section>
   </div>
 
-  <!-- Corazones flotantes -->
-  <div class="heart"></div>
-  <div class="heart"></div>
-  <div class="heart"></div>
-  <div class="heart"></div>
-  <div class="heart"></div>
+<script>
+/* ============================================================
+   Web de Clima — sin dependencias, Open-Meteo, ES Modules free
+   Autor: tú
+   Notas:
+   - Geocoding: https://geocoding-api.open-meteo.com/v1/search
+   - Forecast:  https://api.open-meteo.com/v1/forecast
+   - Sin clave, rápido y ligero.
+   ============================================================ */
+
+/* ---------------------------
+   Utilidades y constantes
+   --------------------------- */
+
+/** Mapa de códigos de clima (WMO) -> descripción corta en español */
+const WMO = {
+  0: "Despejado",
+  1: "Mayormente despejado",
+  2: "Parcialmente nublado",
+  3: "Nublado",
+  45: "Niebla",
+  48: "Niebla con escarcha",
+  51: "Llovizna ligera",
+  53: "Llovizna",
+  55: "Llovizna fuerte",
+  56: "Llovizna helada ligera",
+  57: "Llovizna helada fuerte",
+  61: "Lluvia ligera",
+  63: "Lluvia",
+  65: "Lluvia intensa",
+  66: "Lluvia helada ligera",
+  67: "Lluvia helada fuerte",
+  71: "Nieve ligera",
+  73: "Nieve",
+  75: "Nieve intensa",
+  77: "Granos de nieve",
+  80: "Chubascos ligeros",
+  81: "Chubascos",
+  82: "Chubascos intensos",
+  85: "Chaparrón de nieve ligero",
+  86: "Chaparrón de nieve intenso",
+  95: "Tormenta",
+  96: "Tormenta con granizo",
+  99: "Tormenta fuerte con granizo"
+};
+
+/** Formatea fecha/hora local corta */
+const fmtTime = (iso) => {
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"});
+};
+const fmtDate = (iso) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString([], {weekday:"short", day:"2-digit", month:"short"});
+};
+
+/** Conversión Celsius ↔ Fahrenheit */
+const toF = c => (c * 9/5) + 32;
+const toC = f => (f - 32) * 5/9;
+
+/** Redondeo amigable */
+const r1 = v => Math.round(v*10)/10;
+
+/** Control de UI rápido */
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, cls, txt) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+
+/* ---------------------------
+   Estado de la app
+   --------------------------- */
+const state = {
+  unit: "C",                // "C" | "F"
+  coords: null,             // {lat, lon}
+  place: null,              // {name, country, admin1}
+  hourly: null,             // datos horarios
+  daily: null,              // datos diarios
+  current: null             // datos actuales
+};
+
+/* ---------------------------
+   API: geocodificar y clima
+   --------------------------- */
+
+/** Busca la primera coincidencia de ciudad por nombre */
+async function geocodeCity(name){
+  const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
+  url.searchParams.set("name", name);
+  url.searchParams.set("count", "1");
+  url.searchParams.set("language", "es");
+  url.searchParams.set("format", "json");
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("Error en geocodificación");
+  const data = await res.json();
+  if(!data.results || !data.results.length) throw new Error("No se encontró la ciudad");
+  const c = data.results[0];
+  return {
+    lat: c.latitude,
+    lon: c.longitude,
+    name: c.name,
+    country: c.country,
+    admin1: c.admin1 || ""
+  };
+}
+
+/** Pide pronóstico y condiciones actuales a Open-Meteo */
+async function getForecast(lat, lon){
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", lat);
+  url.searchParams.set("longitude", lon);
+  url.searchParams.set("timezone", "auto");
+  url.searchParams.set("current", "temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code");
+  url.searchParams.set("hourly", "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code");
+  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunrise,sunset,weather_code");
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("No se pudo obtener el pronóstico");
+  return await res.json();
+}
+
+/* ---------------------------
+   Renderizado
+   --------------------------- */
+
+/** Actualiza panel “Ahora” */
+function renderNow(){
+  const u = state.unit;
+  const cur = state.current;
+  if(!cur){ return; }
+
+  const t = u === "C" ? cur.temperature_2m : toF(cur.temperature_2m);
+  const feels = u === "C" ? cur.apparent_temperature : toF(cur.apparent_temperature);
+
+  $("#placeName").textContent = state.place?.name || "—";
+  $("#placeMeta").textContent = [state.place?.admin1, state.place?.country].filter(Boolean).join(", ");
+  $("#nowTemp").textContent = r1(t);
+  $("#nowUnit").textContent = `°${u}`;
+  $("#nowDesc").textContent = WMO[cur.weather_code] ?? "—";
+  $("#nowFeels").textContent = `${r1(feels)} °${u}`;
+  $("#nowHum").textContent = `${cur.relative_humidity_2m}%`;
+  $("#nowWind").textContent = `${r1(cur.wind_speed_10m)} km/h`;
+
+  const tzNow = new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  $("#timeInfo").textContent = `Actualizado: ${tzNow}`;
+}
+
+/** Renderiza tab de tarjetas (horas o días) */
+function renderTab(kind){
+  const box = $("#tabContent");
+  box.innerHTML = "";
+
+  if(kind === "hourly"){
+    // Mostrar próximas 12 horas
+    const H = state.hourly;
+    if(!H) return;
+    const n = H.time.length;
+    const take = Math.min(12, n);
+    for(let i=0;i<take;i++){
+      const tIso = H.time[i];
+      const code = H.weather_code[i];
+      const tempC = H.temperature_2m[i];
+      const temp = state.unit === "C" ? tempC : toF(tempC);
+      const hum = H.relative_humidity_2m[i];
+      const pr = H.precipitation[i];
+      const w = H.wind_speed_10m[i];
+
+      const card = el("div","chip");
+      card.append(
+        el("div","w", fmtTime(tIso)),
+        el("div","t", `${r1(temp)} °${state.unit}`),
+        el("div","w", WMO[code] ?? "—"),
+        el("div","rain", `☂ ${r1(pr)} mm`),
+        el("div","wind", `↯ ${r1(w)} km/h`),
+        el("div","w", `💧 ${hum}%`)
+      );
+      box.append(card);
+    }
+  } else {
+    // Mostrar próximos 7 días
+    const D = state.daily;
+    if(!D) return;
+    const days = D.time.length;
+    for(let i=0;i<days;i++){
+      const hiC = D.temperature_2m_max[i];
+      const loC = D.temperature_2m_min[i];
+      const hi = state.unit === "C" ? hiC : toF(hiC);
+      const lo = state.unit === "C" ? loC : toF(loC);
+      const rain = D.precipitation_sum[i];
+      const wmax = D.wind_speed_10m_max[i];
+      const code = D.weather_code[i];
+
+      const card = el("div","chip");
+      card.append(
+        el("div","w", fmtDate(D.time[i])),
+        el("div","t", `${r1(hi)}° / ${r1(lo)}° ${state.unit}`),
+        el("div","w", WMO[code] ?? "—"),
+        el("div","rain", `☂ ${r1(rain)} mm`),
+        el("div","wind", `↯ ${r1(wmax)} km/h`)
+      );
+      box.append(card);
+    }
+  }
+}
+
+/* ---------------------------
+   Controladores y flujo
+   --------------------------- */
+
+/** Carga datos dado {lat, lon, place?} y renderiza */
+async function loadAndRender({lat, lon, place}){
+  try{
+    $("#errorBox").style.display = "none";
+    const data = await getForecast(lat, lon);
+
+    // Actualiza estado
+    state.coords = {lat, lon};
+    state.place = place || state.place || {name:"Ubicación actual", country:""};
+    state.current = data.current;
+    state.hourly  = data.hourly;
+    state.daily   = data.daily;
+
+    renderNow();
+    const active = document.querySelector(".tab.active")?.dataset.tab || "hourly";
+    renderTab(active);
+  }catch(err){
+    const box = $("#errorBox");
+    box.textContent = err.message || String(err);
+    box.style.display = "block";
+  }
+}
+
+/** Buscar por nombre */
+async function onSearch(){
+  const q = $("#q").value.trim();
+  if(!q) return;
+  const loc = await geocodeCity(q);
+  await loadAndRender({lat:loc.lat, lon:loc.lon, place:{name:loc.name, country:loc.country, admin1:loc.admin1}});
+}
+
+/** Usar geolocalización del navegador */
+function onGeo(){
+  if(!navigator.geolocation){
+    alert("Tu navegador no soporta geolocalización.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const {latitude:lat, longitude:lon} = pos.coords;
+    await loadAndRender({lat, lon, place:{name:"Mi ubicación"}});
+  }, (err)=>{
+    alert("No se pudo obtener tu ubicación.");
+    console.error(err);
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+}
+
+/** Cambiar tab */
+function onTabClick(ev){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  ev.currentTarget.classList.add("active");
+  renderTab(ev.currentTarget.dataset.tab);
+}
+
+/** Cambiar unidad °C/°F */
+function onUnitToggle(){
+  state.unit = $("#unit").checked ? "F" : "C";
+  renderNow();
+  const active = document.querySelector(".tab.active")?.dataset.tab || "hourly";
+  renderTab(active);
+}
+
+/* ---------------------------
+   Inicialización
+   --------------------------- */
+function init(){
+  // Listeners
+  $("#btnSearch").addEventListener("click", onSearch);
+  $("#q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") onSearch(); });
+  $("#btnGeo").addEventListener("click", onGeo);
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click", onTabClick));
+  $("#unit").addEventListener("change", onUnitToggle);
+
+  // Valor por defecto: Cochabamba para demo inicial
+  geocodeCity("Cochabamba").then(loc=>{
+    loadAndRender({lat:loc.lat, lon:loc.lon, place:{name:loc.name, country:loc.country, admin1:loc.admin1}});
+  }).catch(()=>{ /* silencioso */ });
+}
+
+init();
+</script>
 </body>
 </html>
