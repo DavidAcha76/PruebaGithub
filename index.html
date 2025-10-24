@@ -1,540 +1,582 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Clima — Simple y Rápido</title>
-<style>
-  /* ===========================
-     Estilos base y layout
-     =========================== */
-  :root{
-    --bg:#0f172a;           /* fondo azul oscuro */
-    --panel:#111827;        /* panel principal */
-    --soft:#1f2937;         /* bloques */
-    --text:#e5e7eb;         /* texto principal */
-    --muted:#9ca3af;        /* texto secundario */
-    --accent:#06b6d4;       /* cian */
-    --ok:#22c55e;           /* verde */
-    --warn:#f59e0b;         /* amarillo */
-    --err:#ef4444;          /* rojo */
-    --radius:14px;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background: radial-gradient(1200px 600px at 50% -100px, #0b1324 10%, var(--bg) 60%);
-    color:var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
-    line-height:1.45;
-    display:flex; align-items:center; justify-content:center;
-    padding:24px;
-  }
-  .app{
-    width:min(1100px, 100%);
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0));
-    backdrop-filter: blur(4px);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:var(--radius);
-    padding:18px;
-    display:grid;
-    grid-template-rows: auto auto 1fr;
-    gap:14px;
-  }
-  header{
-    display:flex; gap:12px; align-items:center; justify-content:space-between;
-    padding:8px 12px;
-    border-radius:calc(var(--radius) - 6px);
-    background:var(--panel);
-    border:1px solid rgba(255,255,255,0.06);
-  }
-  .brand{display:flex; align-items:center; gap:12px}
-  .brand .dot{
-    width:12px; height:12px; border-radius:50%;
-    background:var(--accent); box-shadow:0 0 24px var(--accent);
-  }
-  .brand h1{
-    font-size:16px; margin:0; letter-spacing:.4px; font-weight:700;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contaminación — Información y Soluciones</title>
+  <meta name="description" content="Página educativa sobre tipos de contaminación, causas, efectos y soluciones prácticas. Diseño responsivo y optimizado." />
 
-  /* ===========================
-     Barra de controles
-     =========================== */
-  .controls{
-    display:grid; grid-template-columns: 1fr auto auto auto; gap:10px;
-    background:var(--panel); border-radius:calc(var(--radius) - 6px);
-    padding:12px; border:1px solid rgba(255,255,255,0.06);
-  }
-  .search{
-    display:flex; gap:8px; align-items:center;
-    background:var(--soft); border-radius:10px; padding:8px;
-  }
-  .search input{
-    flex:1; border:none; outline:none; background:transparent; color:var(--text);
-    font-size:14px;
-  }
-  .btn{
-    border:none; outline:none; cursor:pointer;
-    background:var(--accent); color:#002732; font-weight:700;
-    padding:10px 14px; border-radius:10px;
-  }
-  .btn.secondary{
-    background:#0ea5e9; color:#041116;
-  }
-  .btn.ghost{
-    background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.12);
-  }
-  .unit-toggle{
-    display:flex; align-items:center; gap:6px; padding:0 10px;
-  }
-  .unit-toggle input{accent-color:var(--accent)}
-  .hint{color:var(--muted); font-size:12px; text-align:right; align-self:center}
+  <!-- === Estilos: todo en el mismo archivo para facilidad (puedes separar a styles.css si prefieres) === -->
+  <style>
+    /* === Variables de diseño: paleta y espaciados === */
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --accent: #8b1d2b;       /* tono 'guindo' parecido a lo que te gusta */
+      --muted: #6b6f76;
+      --success: #3a9a6e;
+      --glass: rgba(255,255,255,0.6);
+      --radius: 12px;
+      --flow: 1.25rem;
+      --shadow: 0 6px 18px rgba(15,15,20,0.06);
+      --maxw: 1100px;
+      --fw-heading: 700;
+      --fw-body: 400;
+      --transition: 200ms ease;
+    }
 
-  /* ===========================
-     Contenido principal
-     =========================== */
-  .content{
-    display:grid; grid-template-columns: 420px 1fr; gap:14px;
-  }
-  .card{
-    background:var(--panel); border-radius:calc(var(--radius) - 6px);
-    border:1px solid rgba(255,255,255,0.06);
-    padding:14px;
-  }
-  .now{
-    display:grid; gap:12px;
-  }
-  .place{
-    display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
-  }
-  .place h2{margin:0 0 2px 0; font-size:20px}
-  .place .meta{color:var(--muted); font-size:13px}
-  .big-temp{
-    display:flex; align-items:baseline; gap:8px; margin-top:8px;
-  }
-  .big-temp .t{
-    font-size:56px; font-weight:800; letter-spacing:-1px;
-  }
-  .big-temp .unit{font-size:18px; color:var(--muted)}
-  .summary{
-    display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:8px;
-  }
-  .kv{
-    background:var(--soft); border-radius:10px; padding:10px;
-    display:grid; gap:6px; border:1px solid rgba(255,255,255,0.06);
-  }
-  .kv label{color:var(--muted); font-size:12px}
-  .kv .val{font-weight:700}
+    /* Reset simple */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-weight:var(--fw-body);
+      color:#131417;
+      background:
+        linear-gradient(180deg, rgba(139,29,43,0.03), rgba(10,10,12,0)) , var(--bg);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+      padding: clamp(16px, 3vw, 32px);
+      display:flex;
+      justify-content:center;
+    }
 
-  /* Tablas de pronóstico */
-  .tabs{
-    display:flex; gap:8px; margin-bottom:10px;
-  }
-  .tabs .tab{
-    padding:8px 10px; border-radius:8px; background:var(--soft);
-    border:1px solid rgba(255,255,255,0.06); cursor:pointer; user-select:none;
-  }
-  .tabs .tab.active{outline:2px solid var(--accent)}
-  .grid{
-    display:grid; gap:8px;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-  .chip{
-    background:var(--soft); border:1px solid rgba(255,255,255,0.06);
-    border-radius:10px; padding:8px;
-    display:grid; gap:4px; text-align:center;
-  }
-  .chip .t{font-size:18px; font-weight:800}
-  .chip .w{font-size:12px; color:var(--muted)}
-  .chip .hi{color:var(--ok); font-weight:700}
-  .chip .lo{color:#60a5fa; font-weight:700}
-  .chip .rain{color:var(--warn); font-weight:700}
-  .chip .wind{color:#93c5fd; font-weight:700}
+    /* Contenedor central */
+    .wrap{
+      width:100%;
+      max-width:var(--maxw);
+    }
 
-  /* Responsivo */
-  @media (max-width: 980px){
-    .content{grid-template-columns: 1fr}
-  }
-  @media (max-width:600px){
-    .controls{grid-template-columns:1fr 1fr; grid-auto-rows:auto}
-    .hint{grid-column:1 / -1; text-align:left}
-  }
+    header.site-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:clamp(16px, 3.5vw, 28px);
+    }
 
-  /* Estados */
-  .error{
-    padding:10px; border-radius:10px; background:rgba(239,68,68,0.07);
-    border:1px solid rgba(239,68,68,0.35); color:#fecaca; font-size:14px;
-  }
-</style>
+    /* Logo simple (texto) */
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:.75rem;
+    }
+    .logo .mark{
+      width:46px;
+      height:46px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),#402023);
+      box-shadow:var(--shadow);
+      display:grid;
+      place-items:center;
+      color: white;
+      font-weight:700;
+      font-size:1rem;
+    }
+    .logo h1{margin:0;font-size:1.05rem;letter-spacing:-0.01em}
+
+    /* Nav */
+    nav ul{
+      list-style:none;
+      display:flex;
+      gap:.75rem;
+      margin:0;
+      padding:0;
+      align-items:center;
+    }
+    nav a{
+      text-decoration:none;
+      color:var(--muted);
+      font-weight:600;
+      padding:.5rem .8rem;
+      border-radius:10px;
+      transition: background var(--transition), color var(--transition), transform var(--transition);
+    }
+    nav a:hover{background:var(--glass); color:var(--accent); transform:translateY(-2px)}
+
+    /* Hero */
+    .hero{
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap: clamp(18px, 3.2vw, 36px);
+      align-items:stretch;
+      margin-bottom: clamp(18px, 3.2vw, 32px);
+    }
+    @media (max-width:900px){
+      .hero{grid-template-columns:1fr; padding-bottom:0}
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding: clamp(18px,2.5vw,28px);
+      overflow:hidden;
+    }
+
+    .hero-left h2{
+      margin:0 0 .6rem 0;
+      font-size:clamp(1.35rem, 2.4vw, 2rem);
+      font-weight:var(--fw-heading);
+      color:#111214;
+    }
+    .lead{color:var(--muted); margin:0 0 1rem 0}
+
+    /* Estadísticas rápidas */
+    .stats{
+      display:flex;
+      gap:1rem;
+      margin-top:1rem;
+      flex-wrap:wrap;
+    }
+    .stat{
+      flex:1 1 140px;
+      min-width:140px;
+      background:linear-gradient(180deg, rgba(139,29,43,0.03), rgba(255,255,255,0));
+      border-radius:10px;
+      padding:.75rem .9rem;
+      display:flex;
+      flex-direction:column;
+      gap:.25rem;
+    }
+    .stat .num{font-weight:700; font-size:1.15rem; color:var(--accent)}
+    .stat .lbl{font-size:.85rem; color:var(--muted)}
+
+    /* Hero-right: ilustración simple con SVG y datos */
+    .hero-right{
+      display:flex;
+      flex-direction:column;
+      gap:.75rem;
+      justify-content:center;
+      align-items:center;
+    }
+    .earth{
+      width:100%;
+      max-width:320px;
+      height:220px;
+      display:grid;
+      place-items:center;
+    }
+
+    /* Main content layout: grid */
+    main .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap: clamp(18px, 3vw, 28px);
+      align-items:start;
+    }
+    @media (max-width:1000px){
+      main .grid{grid-template-columns:1fr}
+    }
+
+    article.section + article.section{margin-top:1rem}
+
+    h3{margin:0 0 .6rem 0; font-size:1.05rem; color:#111214}
+    p {margin:0 0 .9rem 0; color:var(--muted)}
+
+    /* Listas y chips */
+    ul.clean{padding-left:1.1rem; color:var(--muted)}
+    .chip{
+      display:inline-block;
+      padding:.35rem .6rem;
+      background:rgba(10,10,12,0.04);
+      border-radius:999px;
+      font-size:.85rem;
+      color:var(--muted);
+      margin-right:.4rem;
+    }
+
+    /* CTA area */
+    .cta-row{display:flex; gap:.6rem; margin-top:.6rem; flex-wrap:wrap}
+    .btn{
+      border:0;
+      padding:.8rem 1rem;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .btn-primary{background:var(--accent); color:white}
+    .btn-outline{background:transparent; border:1px solid rgba(0,0,0,0.06); color:var(--muted)}
+    .btn:hover{transform:translateY(-3px)}
+
+    /* Small cards on sidebar */
+    .side-card{display:flex;flex-direction:column;gap:.6rem}
+    .progress{
+      height:12px;
+      background:rgba(0,0,0,0.06);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .progress > span{display:block; height:100%; background:linear-gradient(90deg,var(--accent),#d44d5c); width:45%}
+
+    /* Footer */
+    footer{
+      margin-top:clamp(20px, 4vw, 36px);
+      text-align:center;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    /* Small responsive tweaks */
+    @media (max-width:480px){
+      nav ul{display:none}
+      .logo h1{font-size:1rem}
+      .hero-right{order:2}
+    }
+  </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="dot"></div>
-        <h1>Clima — Simple</h1>
+  <div class="wrap">
+
+    <!-- HEADER -->
+    <header class="site-head">
+      <div class="logo" aria-hidden="false">
+        <div class="mark" aria-hidden="true">C</div>
+        <h1>Contaminación</h1>
+        <small style="color:var(--muted); margin-left:.6rem;">Guía breve y práctica</small>
       </div>
-      <div class="hint" id="timeInfo">—</div>
+
+      <nav aria-label="Navegación principal">
+        <ul>
+          <li><a href="#tipos">Tipos</a></li>
+          <li><a href="#efectos">Efectos</a></li>
+          <li><a href="#soluciones">Soluciones</a></li>
+          <li><a href="#recursos">Recursos</a></li>
+        </ul>
+      </nav>
     </header>
 
-    <section class="controls">
-      <!-- Buscador de ciudad -->
-      <div class="search">
-        <input id="q" type="search" placeholder="Busca una ciudad… (ej. Cochabamba, Madrid, CDMX)" autocomplete="off" />
-        <button class="btn" id="btnSearch" title="Buscar por nombre">Buscar</button>
+    <!-- HERO -->
+    <section class="hero">
+      <!-- Izquierda: introducción y stats -->
+      <div class="card hero-left" role="region" aria-labelledby="hero-title">
+        <h2 id="hero-title">Contaminación: qué es y por qué nos importa</h2>
+        <p class="lead">
+          La contaminación es la presencia de sustancias o energía en el medio ambiente que causan efectos adversos para la salud humana, los ecosistemas y el clima.
+          Aquí tienes datos rápidos, causas comunes y soluciones que puedes aplicar ya.
+        </p>
+
+        <div class="stats" aria-hidden="false">
+          <div class="stat" title="Estadística ejemplo">
+            <div class="num" id="stat-co2">415 ppm</div>
+            <div class="lbl">CO₂ (atmósfera)</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="stat-air">~7M</div>
+            <div class="lbl">Muertes/yr (contaminación del aire)</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="stat-plast">>8M t</div>
+            <div class="lbl">Plástico en océanos (anual)</div>
+          </div>
+        </div>
+
+        <div class="cta-row" style="margin-top:1rem;">
+          <button class="btn btn-primary" id="btn-learn">Aprender más</button>
+          <button class="btn btn-outline" id="btn-action">Acciones rápidas</button>
+        </div>
       </div>
 
-      <!-- Mi ubicación -->
-      <button class="btn secondary" id="btnGeo" title="Usar mi ubicación">Usar ubicación</button>
+      <!-- Derecha: ilustración simple (SVG) y tarjeta de impacto -->
+      <aside class="card hero-right" aria-labelledby="impact-title">
+        <div class="earth" role="img" aria-label="Ilustración de contaminación">
+          <!-- SVG simple para evitar dependencias externas -->
+          <svg viewBox="0 0 200 120" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <!-- cielo -->
+            <rect x="0" y="0" width="200" height="120" rx="8" fill="url(#g1)"/>
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1">
+                <stop offset="0" stop-color="#cfe7ff"/>
+                <stop offset="1" stop-color="#e9f3ff"/>
+              </linearGradient>
+            </defs>
 
-      <!-- Selector de unidades -->
-      <div class="unit-toggle">
-        <input type="checkbox" id="unit" />
-        <label for="unit" title="Cambiar °C / °F">°C / °F</label>
-      </div>
+            <!-- ciudad simplificada -->
+            <g transform="translate(12,30)">
+              <rect x="0" y="22" width="28" height="38" rx="2" fill="#2d2f36"/>
+              <rect x="36" y="10" width="18" height="50" rx="2" fill="#3b3d45"/>
+              <rect x="60" y="18" width="20" height="42" rx="2" fill="#222"/>
+              <!-- chimenea -->
+              <rect x="94" y="26" width="6" height="34" fill="#2a2a2a"/>
+              <rect x="98" y="18" width="10" height="8" fill="#2a2a2a"/>
+              <!-- humo: animado con CSS inline via class -->
+              <g class="smoke" fill="rgba(20,20,20,0.18)">
+                <ellipse cx="102" cy="8" rx="10" ry="4"></ellipse>
+                <ellipse cx="112" cy="2" rx="8" ry="3"></ellipse>
+                <ellipse cx="124" cy="-3" rx="6" ry="2.5"></ellipse>
+              </g>
+            </g>
+          </svg>
+        </div>
 
-      <!-- Tip -->
-      <div class="hint">Consejo: activa “Usar ubicación” para datos más precisos.</div>
-    </section>
-
-    <section class="content">
-      <!-- Panel: Ahora -->
-      <div class="card now" id="nowPanel">
-        <div class="place">
+        <div class="side-card">
           <div>
-            <h2 id="placeName">—</h2>
-            <div class="meta" id="placeMeta">—</div>
+            <h3 id="impact-title">Impacto local</h3>
+            <p>La contaminación afecta la salud respiratoria, la biodiversidad y la calidad del agua. Pequeñas acciones locales generan cambios reales.</p>
           </div>
-          <div class="big-temp">
-            <div class="t" id="nowTemp">—</div>
-            <div class="unit" id="nowUnit">°C</div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong>Acción comunitaria</strong>
+              <span style="color:var(--muted);font-size:.9rem">45% completado</span>
+            </div>
+            <div class="progress" aria-hidden="true">
+              <span></span>
+            </div>
+          </div>
+
+          <div>
+            <small style="color:var(--muted)">Comparte esta página o usa el botón "Acciones rápidas" para ideas concretas.</small>
           </div>
         </div>
-
-        <div class="summary">
-          <div class="kv">
-            <label>Descripción</label>
-            <div class="val" id="nowDesc">—</div>
-          </div>
-          <div class="kv">
-            <label>Sensación</label>
-            <div class="val" id="nowFeels">—</div>
-          </div>
-          <div class="kv">
-            <label>Humedad</label>
-            <div class="val" id="nowHum">—</div>
-          </div>
-          <div class="kv">
-            <label>Viento</label>
-            <div class="val" id="nowWind">—</div>
-          </div>
-        </div>
-
-        <div id="errorBox" class="error" style="display:none"></div>
-      </div>
-
-      <!-- Panel: Pronóstico -->
-      <div class="card">
-        <div class="tabs">
-          <div class="tab active" data-tab="hourly">Hoy</div>
-          <div class="tab" data-tab="daily">Próximos días</div>
-        </div>
-        <div id="tabContent" class="grid"></div>
-      </div>
+      </aside>
     </section>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main>
+      <div class="grid">
+
+        <!-- COLUMNA PRINCIPAL -->
+        <section class="card" aria-labelledby="tipos" role="region">
+          <article class="section" id="tipos" aria-labelledby="tipos-title">
+            <h3 id="tipos-title">Tipos de contaminación</h3>
+            <p class="lead">Resumen práctico y directo.</p>
+
+            <ul class="clean">
+              <li><strong>Contaminación del aire:</strong> emisiones industriales, tráfico, quema de biomasa y combustibles fósiles.</li>
+              <li><strong>Contaminación del agua:</strong> vertidos industriales, agrícolas (pesticidas, fertilizantes) y desechos plásticos.</li>
+              <li><strong>Contaminación del suelo:</strong> agroquímicos, residuos peligrosos y derrames de hidrocarburos.</li>
+              <li><strong>Contaminación acústica:</strong> tráfico, industria, constructora y actividades urbanas.</li>
+              <li><strong>Contaminación lumínica:</strong> exceso de iluminación pública y comercial que altera ecosistemas.</li>
+            </ul>
+          </article>
+
+          <article class="section" id="efectos" aria-labelledby="efectos-title" style="margin-top:1rem;">
+            <h3 id="efectos-title">Efectos para la salud y el ambiente</h3>
+            <p>Entre los efectos más relevantes: enfermedades respiratorias, pérdida de especies, acidificación del agua, fenómenos climáticos extremos y daños económicos.</p>
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:.6rem;">
+              <div style="flex:1; min-width:160px;">
+                <div style="background:linear-gradient(180deg,#fff,#f8f9fb); padding:.6rem; border-radius:10px;">
+                  <strong>Salud</strong>
+                  <p style="margin:.5rem 0 0 0; color:var(--muted)">asma, infecciones respiratorias, eventos cardiovasculares.</p>
+                </div>
+              </div>
+              <div style="flex:1; min-width:160px;">
+                <div style="background:linear-gradient(180deg,#fff,#f8f9fb); padding:.6rem; border-radius:10px;">
+                  <strong>Ecología</strong>
+                  <p style="margin:.5rem 0 0 0; color:var(--muted)">pérdida de hábitats y degradación de suelos y aguas.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="section" id="soluciones" aria-labelledby="soluciones-title" style="margin-top:1rem;">
+            <h3 id="soluciones-title">Soluciones (personales y comunitarias)</h3>
+            <p>Acciones simples que cualquiera puede aplicar:</p>
+
+            <ul class="clean">
+              <li><span class="chip">Movilidad</span>Usa transporte público, bicicleta o comparte vehículo.</li>
+              <li><span class="chip">Consumo</span>Reduce, reutiliza y recicla; evita plásticos de un solo uso.</li>
+              <li><span class="chip">Energía</span>Ahorra energía: cambia a bombillas LED, desconecta lo que no usas.</li>
+              <li><span class="chip">Comunidad</span>Participa en limpiezas de ríos/espacios y en campañas de plantación.</li>
+              <li><span class="chip">Política</span>Infórmate y apoya políticas públicas que controlen emisiones y residuos.</li>
+            </ul>
+
+            <p style="margin-top:.6rem">Si quieres, puedo generarte una checklist imprimible o un flyer en PDF con estas acciones.</p>
+          </article>
+
+          <article class="section" id="acciones-rapidas" aria-labelledby="acciones-title" style="margin-top:1rem;">
+            <h3 id="acciones-title">Acciones rápidas</h3>
+            <ol>
+              <li>Reemplaza 3 objetos plásticos de un solo uso esta semana.</li>
+              <li>Camina o usa bici al menos 2 días (si puedes).</li>
+              <li>Evita tirar aceite en el fregadero; guarda y dispón correctamente.</li>
+            </ol>
+          </article>
+
+          <article class="section" id="recursos" aria-labelledby="recursos-title" style="margin-top:1rem;">
+            <h3 id="recursos-title">Recursos y lecturas</h3>
+            <p>Algunos recursos confiables para profundizar (recomendados):</p>
+            <ul class="clean">
+              <li>Organización Mundial de la Salud — informes sobre contaminación del aire.</li>
+              <li>UNEP — informes sobre plástico y gestión de residuos.</li>
+              <li>ONGs locales y municipales: programas de reciclaje y recolección selectiva.</li>
+            </ul>
+          </article>
+
+        </section>
+
+        <!-- COLUMNA LATERAL -->
+        <aside class="card" aria-label="Panel lateral">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <h3>Calculadora rápida</h3>
+              <p style="margin-bottom:.4rem;color:var(--muted)">Introduce km recorridos en auto por semana para ver CO₂ estimado.</p>
+
+              <!-- Form simple -->
+              <label for="km" style="font-size:.9rem;color:var(--muted)">Km/sem (auto):</label>
+              <input id="km" type="number" min="0" value="30" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-top:.4rem" />
+
+              <div style="display:flex;gap:.5rem;margin-top:.6rem">
+                <button class="btn btn-primary" id="calcBtn">Calcular</button>
+                <button class="btn btn-outline" id="resetBtn">Reset</button>
+              </div>
+
+              <div id="calcResult" style="margin-top:.6rem;color:var(--muted)">Resultado: —</div>
+            </div>
+
+            <div>
+              <h3>Voluntariado</h3>
+              <p>Únete a limpiezas locales. Si quieres, puedo ayudarte a redactar un mensaje para contactarlos.</p>
+              <button class="btn btn-primary" id="volBtn">Quiero ayudar</button>
+            </div>
+
+            <div>
+              <h3>Contacto</h3>
+              <p style="color:var(--muted)">¿Comentarios o sugerencias? Escribe abajo.</p>
+              <form id="contactForm" onsubmit="return false;">
+                <input name="name" placeholder="Tu nombre" required style="width:100%;padding:.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-bottom:.5rem" />
+                <input name="email" type="email" placeholder="Correo" required style="width:100%;padding:.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-bottom:.5rem" />
+                <textarea name="msg" placeholder="Mensaje (breve)" rows="3" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-bottom:.5rem"></textarea>
+                <button class="btn btn-primary" id="sendContact">Enviar</button>
+              </form>
+              <div id="contactStatus" style="margin-top:.5rem;color:var(--muted)"></div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div style="max-width:var(--maxw);margin:16px auto 0 auto">
+        © <span id="year"></span> — Info sobre contaminación. Hecho para aprender y actuar.
+      </div>
+    </footer>
   </div>
 
-<script>
-/* ============================================================
-   Web de Clima — sin dependencias, Open-Meteo, ES Modules free
-   Autor: tú
-   Notas:
-   - Geocoding: https://geocoding-api.open-meteo.com/v1/search
-   - Forecast:  https://api.open-meteo.com/v1/forecast
-   - Sin clave, rápido y ligero.
-   ============================================================ */
+  <!-- === JavaScript (pequeño, modular y comentado) === -->
+  <script>
+    /* -------------------------
+       Utilidades: helpers pequeños
+       ------------------------- */
+    const $ = (sel, ctx = document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-/* ---------------------------
-   Utilidades y constantes
-   --------------------------- */
-
-/** Mapa de códigos de clima (WMO) -> descripción corta en español */
-const WMO = {
-  0: "Despejado",
-  1: "Mayormente despejado",
-  2: "Parcialmente nublado",
-  3: "Nublado",
-  45: "Niebla",
-  48: "Niebla con escarcha",
-  51: "Llovizna ligera",
-  53: "Llovizna",
-  55: "Llovizna fuerte",
-  56: "Llovizna helada ligera",
-  57: "Llovizna helada fuerte",
-  61: "Lluvia ligera",
-  63: "Lluvia",
-  65: "Lluvia intensa",
-  66: "Lluvia helada ligera",
-  67: "Lluvia helada fuerte",
-  71: "Nieve ligera",
-  73: "Nieve",
-  75: "Nieve intensa",
-  77: "Granos de nieve",
-  80: "Chubascos ligeros",
-  81: "Chubascos",
-  82: "Chubascos intensos",
-  85: "Chaparrón de nieve ligero",
-  86: "Chaparrón de nieve intenso",
-  95: "Tormenta",
-  96: "Tormenta con granizo",
-  99: "Tormenta fuerte con granizo"
-};
-
-/** Formatea fecha/hora local corta */
-const fmtTime = (iso) => {
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"});
-};
-const fmtDate = (iso) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString([], {weekday:"short", day:"2-digit", month:"short"});
-};
-
-/** Conversión Celsius ↔ Fahrenheit */
-const toF = c => (c * 9/5) + 32;
-const toC = f => (f - 32) * 5/9;
-
-/** Redondeo amigable */
-const r1 = v => Math.round(v*10)/10;
-
-/** Control de UI rápido */
-const $ = (sel) => document.querySelector(sel);
-const el = (tag, cls, txt) => {
-  const n = document.createElement(tag);
-  if (cls) n.className = cls;
-  if (txt != null) n.textContent = txt;
-  return n;
-};
-
-/* ---------------------------
-   Estado de la app
-   --------------------------- */
-const state = {
-  unit: "C",                // "C" | "F"
-  coords: null,             // {lat, lon}
-  place: null,              // {name, country, admin1}
-  hourly: null,             // datos horarios
-  daily: null,              // datos diarios
-  current: null             // datos actuales
-};
-
-/* ---------------------------
-   API: geocodificar y clima
-   --------------------------- */
-
-/** Busca la primera coincidencia de ciudad por nombre */
-async function geocodeCity(name){
-  const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
-  url.searchParams.set("name", name);
-  url.searchParams.set("count", "1");
-  url.searchParams.set("language", "es");
-  url.searchParams.set("format", "json");
-  const res = await fetch(url);
-  if(!res.ok) throw new Error("Error en geocodificación");
-  const data = await res.json();
-  if(!data.results || !data.results.length) throw new Error("No se encontró la ciudad");
-  const c = data.results[0];
-  return {
-    lat: c.latitude,
-    lon: c.longitude,
-    name: c.name,
-    country: c.country,
-    admin1: c.admin1 || ""
-  };
-}
-
-/** Pide pronóstico y condiciones actuales a Open-Meteo */
-async function getForecast(lat, lon){
-  const url = new URL("https://api.open-meteo.com/v1/forecast");
-  url.searchParams.set("latitude", lat);
-  url.searchParams.set("longitude", lon);
-  url.searchParams.set("timezone", "auto");
-  url.searchParams.set("current", "temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code");
-  url.searchParams.set("hourly", "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code");
-  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunrise,sunset,weather_code");
-  const res = await fetch(url);
-  if(!res.ok) throw new Error("No se pudo obtener el pronóstico");
-  return await res.json();
-}
-
-/* ---------------------------
-   Renderizado
-   --------------------------- */
-
-/** Actualiza panel “Ahora” */
-function renderNow(){
-  const u = state.unit;
-  const cur = state.current;
-  if(!cur){ return; }
-
-  const t = u === "C" ? cur.temperature_2m : toF(cur.temperature_2m);
-  const feels = u === "C" ? cur.apparent_temperature : toF(cur.apparent_temperature);
-
-  $("#placeName").textContent = state.place?.name || "—";
-  $("#placeMeta").textContent = [state.place?.admin1, state.place?.country].filter(Boolean).join(", ");
-  $("#nowTemp").textContent = r1(t);
-  $("#nowUnit").textContent = `°${u}`;
-  $("#nowDesc").textContent = WMO[cur.weather_code] ?? "—";
-  $("#nowFeels").textContent = `${r1(feels)} °${u}`;
-  $("#nowHum").textContent = `${cur.relative_humidity_2m}%`;
-  $("#nowWind").textContent = `${r1(cur.wind_speed_10m)} km/h`;
-
-  const tzNow = new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
-  $("#timeInfo").textContent = `Actualizado: ${tzNow}`;
-}
-
-/** Renderiza tab de tarjetas (horas o días) */
-function renderTab(kind){
-  const box = $("#tabContent");
-  box.innerHTML = "";
-
-  if(kind === "hourly"){
-    // Mostrar próximas 12 horas
-    const H = state.hourly;
-    if(!H) return;
-    const n = H.time.length;
-    const take = Math.min(12, n);
-    for(let i=0;i<take;i++){
-      const tIso = H.time[i];
-      const code = H.weather_code[i];
-      const tempC = H.temperature_2m[i];
-      const temp = state.unit === "C" ? tempC : toF(tempC);
-      const hum = H.relative_humidity_2m[i];
-      const pr = H.precipitation[i];
-      const w = H.wind_speed_10m[i];
-
-      const card = el("div","chip");
-      card.append(
-        el("div","w", fmtTime(tIso)),
-        el("div","t", `${r1(temp)} °${state.unit}`),
-        el("div","w", WMO[code] ?? "—"),
-        el("div","rain", `☂ ${r1(pr)} mm`),
-        el("div","wind", `↯ ${r1(w)} km/h`),
-        el("div","w", `💧 ${hum}%`)
-      );
-      box.append(card);
+    // formato simple para números
+    function fmtNum(n){
+      return n.toLocaleString?.() ?? String(n);
     }
-  } else {
-    // Mostrar próximos 7 días
-    const D = state.daily;
-    if(!D) return;
-    const days = D.time.length;
-    for(let i=0;i<days;i++){
-      const hiC = D.temperature_2m_max[i];
-      const loC = D.temperature_2m_min[i];
-      const hi = state.unit === "C" ? hiC : toF(hiC);
-      const lo = state.unit === "C" ? loC : toF(loC);
-      const rain = D.precipitation_sum[i];
-      const wmax = D.wind_speed_10m_max[i];
-      const code = D.weather_code[i];
 
-      const card = el("div","chip");
-      card.append(
-        el("div","w", fmtDate(D.time[i])),
-        el("div","t", `${r1(hi)}° / ${r1(lo)}° ${state.unit}`),
-        el("div","w", WMO[code] ?? "—"),
-        el("div","rain", `☂ ${r1(rain)} mm`),
-        el("div","wind", `↯ ${r1(wmax)} km/h`)
-      );
-      box.append(card);
+    /* -------------------------
+       Inicializaciones al cargar
+       ------------------------- */
+    document.addEventListener('DOMContentLoaded', () => {
+      // actualizar año en el footer
+      $('#year').textContent = new Date().getFullYear();
+
+      // eventos UI
+      $('#btn-learn').addEventListener('click', () => {
+        // lleva a la sección de tipos
+        location.hash = '#tipos';
+      });
+
+      $('#btn-action').addEventListener('click', () => {
+        location.hash = '#soluciones';
+      });
+
+      // calculadora CO2 (estimación simplificada)
+      $('#calcBtn').addEventListener('click', handleCalc);
+      $('#resetBtn').addEventListener('click', () => {
+        $('#km').value = 30;
+        $('#calcResult').textContent = 'Resultado: —';
+      });
+
+      // voluntariado y contacto
+      $('#volBtn').addEventListener('click', () => {
+        alert('Genial. Puedes buscar limpiezas comunitarias en redes locales o contactarme para redactar el mensaje.');
+      });
+
+      $('#contactForm').addEventListener('submit', handleContactSend);
+    });
+
+    /* -------------------------
+       Lógica: cálculo simple de CO₂
+       - Promedio aproximado: 0.192 kg CO₂ por km (vehículo ligero promedio)
+       - Este valor es aproximado; es para dar una idea rápida.
+       ------------------------- */
+    function handleCalc(){
+      const km = Number($('#km').value || 0);
+      if (isNaN(km) || km < 0){
+        $('#calcResult').textContent = 'Introduce un número válido.';
+        return;
+      }
+
+      // calculo sencillo: kg CO2 por km * km/sem * 52 semanas -> kg/año
+      const factor = 0.192; // kg CO2 por km (estimación)
+      const kgPerYear = factor * km * 52;
+      const tonPerYear = kgPerYear / 1000;
+
+      $('#calcResult').innerHTML = `
+        Estimación anual: <strong>${fmtNum(kgPerYear.toFixed(0))} kg CO₂</strong>
+        (~${fmtNum(tonPerYear.toFixed(2))} toneladas de CO₂/año).
+        <div style="margin-top:.4rem;color:var(--muted);font-size:.9rem">
+          Consejo: reducir 10 km/sem -> ahorras ~${fmtNum((factor*10*52/1000).toFixed(2))} t CO₂/año
+        </div>
+      `;
     }
-  }
-}
 
-/* ---------------------------
-   Controladores y flujo
-   --------------------------- */
+    /* -------------------------
+       Envío de contacto (simulado)
+       - Como no hay backend, guardamos localmente en SessionStorage
+       - Comentario: si lo quieres con backend, te doy el fetch + endpoint.
+       ------------------------- */
+    function handleContactSend(e){
+      e.preventDefault();
+      const form = e.currentTarget;
+      const data = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        msg: form.msg.value.trim(),
+        ts: new Date().toISOString()
+      };
 
-/** Carga datos dado {lat, lon, place?} y renderiza */
-async function loadAndRender({lat, lon, place}){
-  try{
-    $("#errorBox").style.display = "none";
-    const data = await getForecast(lat, lon);
+      if (!data.name || !data.email || !data.msg){
+        $('#contactStatus').textContent = 'Completa todos los campos.';
+        return;
+      }
 
-    // Actualiza estado
-    state.coords = {lat, lon};
-    state.place = place || state.place || {name:"Ubicación actual", country:""};
-    state.current = data.current;
-    state.hourly  = data.hourly;
-    state.daily   = data.daily;
+      // guardamos en sessionStorage como demo
+      const prev = JSON.parse(sessionStorage.getItem('contacts') || '[]');
+      prev.push(data);
+      sessionStorage.setItem('contacts', JSON.stringify(prev));
 
-    renderNow();
-    const active = document.querySelector(".tab.active")?.dataset.tab || "hourly";
-    renderTab(active);
-  }catch(err){
-    const box = $("#errorBox");
-    box.textContent = err.message || String(err);
-    box.style.display = "block";
-  }
-}
+      $('#contactStatus').textContent = 'Mensaje guardado (demo). Gracias.';
+      form.reset();
+    }
 
-/** Buscar por nombre */
-async function onSearch(){
-  const q = $("#q").value.trim();
-  if(!q) return;
-  const loc = await geocodeCity(q);
-  await loadAndRender({lat:loc.lat, lon:loc.lon, place:{name:loc.name, country:loc.country, admin1:loc.admin1}});
-}
+    /* -------------------------
+       Pequeña animación del "humo" en el SVG
+       (separada para rendimiento: CSS en JS con requestAnimationFrame)
+       ------------------------- */
+    (function smokeAnimation(){
+      const el = document.querySelector('.smoke');
+      if (!el) return;
+      let t = 0;
+      function frame(){
+        t += 0.02;
+        // desplazamientos suaves para dar ilusión de movimiento
+        el.style.transform = `translateY(${Math.sin(t) * 4}px) rotate(${Math.sin(t/2)*3}deg)`;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
 
-/** Usar geolocalización del navegador */
-function onGeo(){
-  if(!navigator.geolocation){
-    alert("Tu navegador no soporta geolocalización.");
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(async (pos)=>{
-    const {latitude:lat, longitude:lon} = pos.coords;
-    await loadAndRender({lat, lon, place:{name:"Mi ubicación"}});
-  }, (err)=>{
-    alert("No se pudo obtener tu ubicación.");
-    console.error(err);
-  }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
-}
-
-/** Cambiar tab */
-function onTabClick(ev){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  ev.currentTarget.classList.add("active");
-  renderTab(ev.currentTarget.dataset.tab);
-}
-
-/** Cambiar unidad °C/°F */
-function onUnitToggle(){
-  state.unit = $("#unit").checked ? "F" : "C";
-  renderNow();
-  const active = document.querySelector(".tab.active")?.dataset.tab || "hourly";
-  renderTab(active);
-}
-
-/* ---------------------------
-   Inicialización
-   --------------------------- */
-function init(){
-  // Listeners
-  $("#btnSearch").addEventListener("click", onSearch);
-  $("#q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") onSearch(); });
-  $("#btnGeo").addEventListener("click", onGeo);
-  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click", onTabClick));
-  $("#unit").addEventListener("change", onUnitToggle);
-
-  // Valor por defecto: Cochabamba para demo inicial
-  geocodeCity("Cochabamba").then(loc=>{
-    loadAndRender({lat:loc.lat, lon:loc.lon, place:{name:loc.name, country:loc.country, admin1:loc.admin1}});
-  }).catch(()=>{ /* silencioso */ });
-}
-
-init();
-</script>
+  </script>
 </body>
 </html>
